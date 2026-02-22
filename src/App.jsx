@@ -7,6 +7,7 @@ const WAQT_LIST = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
 const App = () => {
     const [activeTab, setActiveTab] = useState('quran');
+    const [targetDay, setTargetDay] = useState(29); // 27 or 29
 
     // Quran Logic State
     const [quranState, setQuranState] = useState(() =>
@@ -98,6 +99,26 @@ const App = () => {
     const ramadanDays = getRamadanDays();
     const today = new Date().toISOString().split('T')[0];
 
+    // Pace Calculation
+    const getTilawatPace = () => {
+        const todayObj = new Date();
+        const ramadanStart = new Date('2026-02-19');
+        const diffTime = todayObj - ramadanStart;
+        const currentRamadanDay = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        const daysLeft = targetDay - (currentRamadanDay > 0 ? currentRamadanDay : 0);
+        const pagesLeft = 604 - quranState.page;
+
+        if (daysLeft <= 0) return { daily: pagesLeft, perWaqt: Math.ceil(pagesLeft / 5), daysLeft: 0 };
+
+        const daily = Math.ceil(pagesLeft / daysLeft);
+        const perWaqt = (pagesLeft / (daysLeft * 5)).toFixed(1);
+
+        return { daily, perWaqt, daysLeft };
+    };
+
+    const pace = getTilawatPace();
+
     // Stats
     const quranProgressPercent = Math.round((quranState.page / 604) * 100);
     const totalPossibleWaqt = Object.keys(prayerLogs).length * 5;
@@ -124,27 +145,27 @@ const App = () => {
                 >
                     RAMADAN HUB
                 </motion.h1>
-                <p className="text-slate-400 font-medium">Smart Hifz & Prayer Tracking</p>
+                <p className="text-slate-400 font-medium">Smart Tilawat & Prayer Tracking</p>
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
                 <StatCard
                     icon={<BookOpen className="text-primary" />}
-                    label="Quran Progress"
+                    label="Tilawat Progress"
                     value={`${quranProgressPercent}%`}
                     subValue={`Page ${quranState.page} / 604`}
                 />
                 <StatCard
                     icon={<Clock className="text-emerald-400" />}
-                    label="Prayer Sincerity"
-                    value={`${prayerPercent}%`}
-                    subValue={`${performedWaqt} Waqt Performed`}
+                    label="Daily Target"
+                    value={`${pace.daily} pgs`}
+                    subValue={`Aiming for ${targetDay}th Ram.`}
                 />
                 <StatCard
                     icon={<Trophy className="text-orange-400" />}
-                    label="Ramadan Day"
-                    value={ramadanDays.find(d => d.fullDate === today)?.ramadanDay || '--'}
-                    subValue="Day of Mercy"
+                    label="Remaining"
+                    value={pace.daysLeft > 0 ? pace.daysLeft : 0}
+                    subValue="Days to Target"
                 />
             </div>
 
@@ -153,13 +174,13 @@ const App = () => {
                     active={activeTab === 'quran'}
                     onClick={() => setActiveTab('quran')}
                     icon={<Bookmark size={20} />}
-                    label="Hifz Tracker"
+                    label="Tilawat Tracker"
                 />
                 <TabButton
                     active={activeTab === 'prayer'}
                     onClick={() => setActiveTab('prayer')}
-                    icon={<Calendar size={20} />}
-                    label="Ramadan Calendar"
+                    icon={<Clock size={20} />}
+                    label="Prayer Tracker"
                 />
             </div>
 
@@ -177,9 +198,38 @@ const App = () => {
                                 <BookOpen size={120} />
                             </div>
 
+                            {/* Pace Alert Box */}
+                            <div className="mb-10 p-6 bg-primary/10 border border-primary/20 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6">
+                                <div>
+                                    <h3 className="text-primary font-black uppercase tracking-widest text-sm mb-1">Required Finishing Pace</h3>
+                                    <p className="text-slate-300 text-sm">To finish by the <strong>{targetDay}th of Ramadan</strong>:</p>
+                                </div>
+                                <div className="flex gap-4">
+                                    <div className="text-center bg-dark/40 px-4 py-2 rounded-xl border border-white/5">
+                                        <p className="text-2xl font-black text-primary">{pace.daily}</p>
+                                        <p className="text-[10px] uppercase text-slate-500 font-bold">Pages / Day</p>
+                                    </div>
+                                    <div className="text-center bg-dark/40 px-4 py-2 rounded-xl border border-white/5">
+                                        <p className="text-2xl font-black text-primary">{pace.perWaqt}</p>
+                                        <p className="text-[10px] uppercase text-slate-500 font-bold">Pages / Waqt</p>
+                                    </div>
+                                </div>
+                                <div className="flex bg-dark/50 rounded-lg p-1">
+                                    {[27, 29].map(d => (
+                                        <button
+                                            key={d}
+                                            onClick={() => setTargetDay(d)}
+                                            className={`px-4 py-2 rounded-md text-xs font-black transition-all ${targetDay === d ? 'bg-primary text-dark shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                                        >
+                                            {d}th
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
                             <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
                                 <Layers className="text-primary" />
-                                Smart Tracking Input
+                                Update Current Reading
                             </h2>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -234,7 +284,7 @@ const App = () => {
                                     onClick={() => updateByPage(quranState.page + 1)}
                                     className="px-8 py-3 bg-primary text-dark font-black rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all flex items-center gap-2"
                                 >
-                                    Next Page <Plus size={20} />
+                                    Finish Page <Plus size={20} />
                                 </button>
                             </div>
                         </div>
@@ -248,7 +298,7 @@ const App = () => {
                         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
                     >
                         {ramadanDays.map(day => (
-                            <CalendarDay
+                            <PrayerDay
                                 key={day.ramadanDay}
                                 day={day}
                                 isToday={day.fullDate === today}
@@ -304,7 +354,7 @@ const TabButton = ({ active, onClick, icon, label }) => (
     </button>
 );
 
-const CalendarDay = ({ day, logs, onToggle, isToday }) => {
+const PrayerDay = ({ day, logs, onToggle, isToday }) => {
     const count = Object.values(logs).filter(Boolean).length;
     return (
         <div className={`premium-card p-5 ${isToday ? 'ring-2 ring-primary/50' : ''}`}>
