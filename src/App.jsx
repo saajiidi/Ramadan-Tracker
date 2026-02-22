@@ -137,13 +137,24 @@ const App = () => {
         return acc;
     }, { performed: 0, jamah: 0 });
 
-    const toggleWaqt = (date, waqt) => {
+    const toggleWaqt = (date, waqt, type = 'done') => {
         setPrayerLogs(prev => {
             const dayLogs = prev[date] || {};
-            const key = waqt + '_jamah';
+            const updates = {};
+
+            if (type === 'done') {
+                const newState = !dayLogs[waqt];
+                updates[waqt] = newState;
+                if (!newState) updates[waqt + '_jamah'] = false; // Uncheck jamah if done is unchecked
+            } else {
+                const newState = !dayLogs[waqt + '_jamah'];
+                updates[waqt + '_jamah'] = newState;
+                if (newState) updates[waqt] = true; // Auto-check done if jamah is checked
+            }
+
             return {
                 ...prev,
-                [date]: { ...dayLogs, [key]: !dayLogs[key] }
+                [date]: { ...dayLogs, ...updates }
             };
         });
     };
@@ -170,9 +181,9 @@ const App = () => {
                 />
                 <StatCard
                     icon={<Users className="text-emerald-400" />}
-                    label="Jamah Tracker"
-                    value={prayerStats.jamah}
-                    subValue="Performed in Jamah"
+                    label="Jamah Target"
+                    value={prayerStats.performed > 0 ? `${Math.round((prayerStats.jamah / prayerStats.performed) * 100)}%` : '0%'}
+                    subValue={`${prayerStats.jamah} Jamah / ${prayerStats.performed} Performed`}
                 />
                 <StatCard
                     icon={<Trophy className="text-orange-400" />}
@@ -316,7 +327,7 @@ const App = () => {
                                 day={day}
                                 isToday={day.fullDate === today}
                                 logs={prayerLogs[day.fullDate] || {}}
-                                onToggle={(waqt) => toggleWaqt(day.fullDate, waqt)}
+                                onToggle={(waqt, type) => toggleWaqt(day.fullDate, waqt, type)}
                             />
                         ))}
                     </motion.div>
@@ -368,6 +379,7 @@ const TabButton = ({ active, onClick, icon, label }) => (
 );
 
 const PrayerDay = ({ day, logs, onToggle, isToday }) => {
+    const performedCount = WAQT_LIST.filter(w => logs[w]).length;
     const jamahCount = WAQT_LIST.filter(w => logs[w + '_jamah']).length;
 
     return (
@@ -381,24 +393,33 @@ const PrayerDay = ({ day, logs, onToggle, isToday }) => {
                     </div>
                 </div>
                 <div className="text-right">
-                    <p className="text-xl font-bold">{jamahCount}/5</p>
-                    <p className="text-[10px] text-slate-500 uppercase">Jamah Done</p>
+                    <p className="text-xl font-bold">{performedCount}/5</p>
+                    <p className="text-[10px] text-slate-500 uppercase">{jamahCount} Jamah</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-5 gap-2">
                 {WAQT_LIST.map(waqt => {
+                    const isDone = logs[waqt];
                     const isJamah = logs[waqt + '_jamah'];
                     return (
-                        <button
-                            key={waqt}
-                            onClick={() => onToggle(waqt)}
-                            className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all ${isJamah ? 'bg-primary text-dark shadow-lg shadow-primary/20 scale-105' : 'bg-white/5 text-slate-600 hover:text-slate-400'}`}
-                            title={`Performed ${waqt} in Jamah`}
-                        >
-                            <span className="text-[10px] font-black">{waqt[0]}</span>
-                            <Users size={16} />
-                        </button>
+                        <div key={waqt} className="flex flex-col gap-1">
+                            <button
+                                onClick={() => onToggle(waqt, 'done')}
+                                className={`flex flex-col items-center p-2 rounded-t-lg transition-all ${isDone ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-slate-600 hover:text-slate-400'}`}
+                                title={`Mark ${waqt} as Performed`}
+                            >
+                                <span className="text-[10px] font-bold mb-1">{waqt[0]}</span>
+                                <CheckCircle2 size={16} />
+                            </button>
+                            <button
+                                onClick={() => onToggle(waqt, 'jamah')}
+                                className={`flex items-center justify-center p-1 rounded-b-lg transition-all border-t border-white/5 ${isJamah ? 'bg-primary/20 text-primary' : 'bg-white/5 text-slate-700 hover:text-slate-500'}`}
+                                title={`${waqt} in Jamah`}
+                            >
+                                <Users size={12} />
+                            </button>
+                        </div>
                     );
                 })}
             </div>
