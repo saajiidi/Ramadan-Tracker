@@ -1,27 +1,83 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Calendar, Clock, CheckCircle2, Search, Plus, Trophy } from 'lucide-react';
+import { BookOpen, Calendar, Clock, CheckCircle2, Search, Plus, Trophy, Bookmark, Hash, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { surahData } from './data/surahData';
+import { juzStarts, surahStarts } from './data/quranMapping';
 
 const WAQT_LIST = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
 const App = () => {
     const [activeTab, setActiveTab] = useState('quran');
-    const [quranProgress, setQuranProgress] = useState(() =>
-        JSON.parse(localStorage.getItem('quranProgress')) || {}
+
+    // Quran Logic State
+    const [quranState, setQuranState] = useState(() =>
+        JSON.parse(localStorage.getItem('quranState')) || { juz: 1, page: 1, surah: 1, ayat: 1 }
     );
+
     const [prayerLogs, setPrayerLogs] = useState(() =>
         JSON.parse(localStorage.getItem('prayerLogs')) || {}
     );
-    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
-        localStorage.setItem('quranProgress', JSON.stringify(quranProgress));
-    }, [quranProgress]);
+        localStorage.setItem('quranState', JSON.stringify(quranState));
+    }, [quranState]);
 
     useEffect(() => {
         localStorage.setItem('prayerLogs', JSON.stringify(prayerLogs));
     }, [prayerLogs]);
+
+    // Tracing Logic
+    const updateByPage = (p) => {
+        const page = Math.max(1, Math.min(604, parseInt(p) || 1));
+
+        // Find Juz
+        let juz = 1;
+        for (let i = 0; i < juzStarts.length; i++) {
+            if (page >= juzStarts[i]) juz = i + 1;
+            else break;
+        }
+
+        // Find Surah
+        let surah = 1;
+        for (let i = 0; i < surahStarts.length; i++) {
+            if (page >= surahStarts[i].p) surah = surahStarts[i].n;
+            else break;
+        }
+
+        setQuranState(prev => ({ ...prev, page, juz, surah, ayat: 1 }));
+    };
+
+    const updateByJuz = (j) => {
+        const juz = Math.max(1, Math.min(30, parseInt(j) || 1));
+        const page = juzStarts[juz - 1];
+
+        // Find Surah
+        let surah = 1;
+        for (let i = 0; i < surahStarts.length; i++) {
+            if (page >= surahStarts[i].p) surah = surahStarts[i].n;
+            else break;
+        }
+
+        setQuranState(prev => ({ ...prev, juz, page, surah, ayat: 1 }));
+    };
+
+    const updateBySurah = (s) => {
+        const surah = Math.max(1, Math.min(114, parseInt(s) || 1));
+        const surahInfo = surahStarts.find(item => item.n === surah);
+        const page = surahInfo.p;
+
+        // Find Juz
+        let juz = 1;
+        for (let i = 0; i < juzStarts.length; i++) {
+            if (page >= juzStarts[i]) juz = i + 1;
+            else break;
+        }
+
+        setQuranState(prev => ({ ...prev, surah, page, juz, ayat: 1 }));
+    };
+
+    const updateByAyat = (a) => {
+        setQuranState(prev => ({ ...prev, ayat: parseInt(a) || 1 }));
+    }
 
     // Ramadan Calendar Data
     const getRamadanDays = () => {
@@ -42,22 +98,11 @@ const App = () => {
     const ramadanDays = getRamadanDays();
     const today = new Date().toISOString().split('T')[0];
 
-    // Calculations
-    const totalAyats = surahData.reduce((acc, s) => acc + s.ayats, 0);
-    const completedAyats = surahData.reduce((acc, s) => acc + (quranProgress[s.number] || 0), 0);
-    const quranPercent = Math.round((completedAyats / totalAyats) * 100);
-
+    // Stats
+    const quranProgressPercent = Math.round((quranState.page / 604) * 100);
     const totalPossibleWaqt = Object.keys(prayerLogs).length * 5;
     const performedWaqt = Object.values(prayerLogs).reduce((acc, day) => acc + Object.values(day).filter(Boolean).length, 0);
     const prayerPercent = totalPossibleWaqt > 0 ? Math.round((performedWaqt / totalPossibleWaqt) * 100) : 0;
-
-    // Handlers
-    const handleAyatChange = (surahNum, val, max) => {
-        let num = parseInt(val) || 0;
-        if (num > max) num = max;
-        if (num < 0) num = 0;
-        setQuranProgress(prev => ({ ...prev, [surahNum]: num }));
-    };
 
     const toggleWaqt = (date, waqt) => {
         setPrayerLogs(prev => ({
@@ -71,7 +116,6 @@ const App = () => {
 
     return (
         <div className="max-w-6xl mx-auto px-4 py-8">
-            {/* Header */}
             <header className="mb-12 text-center">
                 <motion.h1
                     initial={{ opacity: 0, y: -20 }}
@@ -80,16 +124,15 @@ const App = () => {
                 >
                     RAMADAN HUB
                 </motion.h1>
-                <p className="text-slate-400 font-medium">Perfect Tracking for a Blessed Month</p>
+                <p className="text-slate-400 font-medium">Smart Hifz & Prayer Tracking</p>
             </header>
 
-            {/* Stats Dashboard */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
                 <StatCard
                     icon={<BookOpen className="text-primary" />}
                     label="Quran Progress"
-                    value={`${quranPercent}%`}
-                    subValue={`${completedAyats}/${totalAyats} Ayats`}
+                    value={`${quranProgressPercent}%`}
+                    subValue={`Page ${quranState.page} / 604`}
                 />
                 <StatCard
                     icon={<Clock className="text-emerald-400" />}
@@ -105,13 +148,12 @@ const App = () => {
                 />
             </div>
 
-            {/* Navigation */}
-            <div className="flex justify-center gap-4 mb-8">
+            <div className="flex justify-center gap-4 mb-12">
                 <TabButton
                     active={activeTab === 'quran'}
                     onClick={() => setActiveTab('quran')}
-                    icon={<BookOpen size={20} />}
-                    label="Quran Tracker"
+                    icon={<Bookmark size={20} />}
+                    label="Hifz Tracker"
                 />
                 <TabButton
                     active={activeTab === 'prayer'}
@@ -121,44 +163,88 @@ const App = () => {
                 />
             </div>
 
-            {/* Tab Content */}
             <AnimatePresence mode="wait">
                 {activeTab === 'quran' ? (
                     <motion.div
                         key="quran"
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="max-w-4xl mx-auto"
                     >
-                        <div className="mb-8 max-w-xl mx-auto relative">
-                            <Search className="absolute left-4 top-3 text-slate-500" size={20} />
-                            <input
-                                type="text"
-                                placeholder="Search Surah by name or number..."
-                                className="w-full bg-card border border-white/10 rounded-full py-3 pl-12 pr-6 outline-none focus:border-primary transition-colors"
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                        </div>
+                        <div className="premium-card p-10 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-8 opacity-10">
+                                <BookOpen size={120} />
+                            </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {surahData
-                                .filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()) || s.number.toString().includes(searchQuery))
-                                .map(surah => (
-                                    <SurahCard
-                                        key={surah.number}
-                                        surah={surah}
-                                        progress={quranProgress[surah.number] || 0}
-                                        onChange={(val) => handleAyatChange(surah.number, val, surah.ayats)}
-                                    />
-                                ))}
+                            <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
+                                <Layers className="text-primary" />
+                                Smart Tracking Input
+                            </h2>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                                <SmartInput
+                                    label="Juz / Para"
+                                    value={quranState.juz}
+                                    max={30}
+                                    onChange={updateByJuz}
+                                    icon={<Hash size={16} />}
+                                />
+                                <SmartInput
+                                    label="Page (Hafezi)"
+                                    value={quranState.page}
+                                    max={604}
+                                    onChange={updateByPage}
+                                    icon={<Bookmark size={16} />}
+                                />
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold uppercase text-slate-500 tracking-wider">Surah Name</label>
+                                    <select
+                                        value={quranState.surah}
+                                        onChange={(e) => updateBySurah(e.target.value)}
+                                        className="w-full bg-dark/50 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-primary transition-all text-primary font-bold appearance-none cursor-pointer"
+                                    >
+                                        {surahStarts.map(s => (
+                                            <option key={s.n} value={s.n} className="bg-dark">{s.n}. {s.s}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <SmartInput
+                                    label="Ayat Number"
+                                    value={quranState.ayat}
+                                    max={286}
+                                    onChange={updateByAyat}
+                                    icon={<Plus size={16} />}
+                                />
+                            </div>
+
+                            <div className="mt-12 p-6 bg-white/5 rounded-2xl border border-white/5 flex flex-col md:flex-row items-center justify-between gap-6">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-primary text-2xl font-black">
+                                        {quranState.juz}
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-slate-400">Current Position</p>
+                                        <p className="text-xl font-black text-gradient uppercase tracking-wide">
+                                            {surahStarts.find(s => s.n === quranState.surah)?.s} • Page {quranState.page}
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => updateByPage(quranState.page + 1)}
+                                    className="px-8 py-3 bg-primary text-dark font-black rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all flex items-center gap-2"
+                                >
+                                    Next Page <Plus size={20} />
+                                </button>
+                            </div>
                         </div>
                     </motion.div>
                 ) : (
                     <motion.div
                         key="prayer"
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
                         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
                     >
                         {ramadanDays.map(day => (
@@ -177,6 +263,25 @@ const App = () => {
     );
 };
 
+const SmartInput = ({ label, value, max, onChange, icon }) => (
+    <div className="space-y-2">
+        <label className="text-xs font-bold uppercase text-slate-500 tracking-wider flex items-center gap-1">
+            {icon} {label}
+        </label>
+        <div className="relative group">
+            <input
+                type="number"
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                min={1}
+                max={max}
+                className="w-full bg-dark/50 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-primary transition-all text-primary font-bold group-hover:border-white/20"
+            />
+            <span className="absolute right-4 top-3 text-[10px] text-slate-600 font-bold">MAX {max}</span>
+        </div>
+    </div>
+);
+
 const StatCard = ({ icon, label, value, subValue }) => (
     <div className="premium-card p-6 flex items-center gap-6">
         <div className="p-4 bg-white/5 rounded-2xl">{icon}</div>
@@ -191,63 +296,13 @@ const StatCard = ({ icon, label, value, subValue }) => (
 const TabButton = ({ active, onClick, icon, label }) => (
     <button
         onClick={onClick}
-        className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all ${active ? 'bg-primary text-dark shadow-xl' : 'bg-card text-slate-400 hover:text-white'
+        className={`flex items-center gap-2 px-8 py-4 rounded-2xl font-black transition-all ${active ? 'bg-primary text-dark shadow-xl shadow-primary/20 scale-105' : 'bg-card text-slate-400 hover:text-white'
             }`}
     >
         {icon}
         {label}
     </button>
 );
-
-const SurahCard = ({ surah, progress, onChange }) => {
-    const percent = Math.round((progress / surah.ayats) * 100);
-    return (
-        <div className="premium-card p-6 relative overflow-hidden group">
-            <div className="absolute -right-4 -top-4 text-7xl font-black opacity-5 group-hover:opacity-10 transition-opacity">
-                {surah.number}
-            </div>
-            <div className="flex justify-between items-start mb-4">
-                <div>
-                    <h3 className="text-xl font-bold text-primary">{surah.name}</h3>
-                    <p className="text-sm text-slate-500">{surah.englishName}</p>
-                </div>
-                <div className="text-right">
-                    <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded">
-                        {surah.ayats} Ayats
-                    </span>
-                </div>
-            </div>
-
-            <div className="space-y-4">
-                <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1 bg-white/5 rounded-lg p-2 flex items-center">
-                        <input
-                            type="number"
-                            value={progress}
-                            onChange={(e) => onChange(e.target.value)}
-                            className="bg-transparent w-full text-center font-bold text-primary outline-none"
-                        />
-                        <span className="text-slate-600 px-2">/</span>
-                        <span className="text-slate-400 font-medium">{surah.ayats}</span>
-                    </div>
-                    <button
-                        onClick={() => onChange(progress === surah.ayats ? 0 : surah.ayats)}
-                        className={`p-2 rounded-lg transition-colors ${progress === surah.ayats ? 'bg-primary text-dark' : 'bg-white/5 text-slate-400'}`}
-                    >
-                        <CheckCircle2 size={24} />
-                    </button>
-                </div>
-                <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                    <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${percent}%` }}
-                        className="h-full bg-primary"
-                    />
-                </div>
-            </div>
-        </div>
-    );
-};
 
 const CalendarDay = ({ day, logs, onToggle, isToday }) => {
     const count = Object.values(logs).filter(Boolean).length;
