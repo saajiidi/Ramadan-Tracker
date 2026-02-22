@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Calendar, Clock, CheckCircle2, Search, Plus, Trophy, Bookmark, Hash, Layers, Users } from 'lucide-react';
+import { BookOpen, Calendar, Clock, CheckCircle2, Search, Plus, Trophy, Bookmark, Hash, Layers, Users, Star, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { juzStarts, surahStarts } from './data/quranMapping';
 
@@ -26,38 +26,29 @@ const App = () => {
         localStorage.setItem('prayerLogs', JSON.stringify(prayerLogs));
     }, [prayerLogs]);
 
-    // Tracing Logic
     const updateByPage = (p) => {
         const page = Math.max(1, Math.min(604, parseInt(p) || 1));
-
-        // Find Juz
         let juz = 1;
         for (let i = 0; i < juzStarts.length; i++) {
             if (page >= juzStarts[i]) juz = i + 1;
             else break;
         }
-
-        // Find Surah
         let surah = 1;
         for (let i = 0; i < surahStarts.length; i++) {
             if (page >= surahStarts[i].p) surah = surahStarts[i].n;
             else break;
         }
-
         setQuranState(prev => ({ ...prev, page, juz, surah, ayat: 1 }));
     };
 
     const updateByJuz = (j) => {
         const juz = Math.max(1, Math.min(30, parseInt(j) || 1));
         const page = juzStarts[juz - 1];
-
-        // Find Surah
         let surah = 1;
         for (let i = 0; i < surahStarts.length; i++) {
             if (page >= surahStarts[i].p) surah = surahStarts[i].n;
             else break;
         }
-
         setQuranState(prev => ({ ...prev, juz, page, surah, ayat: 1 }));
     };
 
@@ -65,22 +56,18 @@ const App = () => {
         const surah = Math.max(1, Math.min(114, parseInt(s) || 1));
         const surahInfo = surahStarts.find(item => item.n === surah);
         const page = surahInfo.p;
-
-        // Find Juz
         let juz = 1;
         for (let i = 0; i < juzStarts.length; i++) {
             if (page >= juzStarts[i]) juz = i + 1;
             else break;
         }
-
         setQuranState(prev => ({ ...prev, surah, page, juz, ayat: 1 }));
     };
 
     const updateByAyat = (a) => {
         setQuranState(prev => ({ ...prev, ayat: parseInt(a) || 1 }));
-    }
+    };
 
-    // Ramadan Calendar Data
     const getRamadanDays = () => {
         const days = [];
         const startDate = new Date('2026-02-19');
@@ -99,36 +86,23 @@ const App = () => {
     const ramadanDays = getRamadanDays();
     const today = new Date().toISOString().split('T')[0];
 
-    // Pace Calculation
     const getTilawatPace = () => {
         const todayObj = new Date();
         const ramadanStart = new Date('2026-02-19');
-
-        // Reset hours to compare dates clearly
         const d1 = new Date(todayObj.getFullYear(), todayObj.getMonth(), todayObj.getDate());
         const d2 = new Date(ramadanStart.getFullYear(), ramadanStart.getMonth(), ramadanStart.getDate());
-
         const diffDays = Math.floor((d1 - d2) / (1000 * 60 * 60 * 24));
-        const currentRamadanDay = diffDays + 1; // Day 1, Day 2 etc.
-
+        const currentRamadanDay = diffDays + 1;
         const daysLeft = targetDay - (currentRamadanDay > 0 ? currentRamadanDay - 1 : 0);
-        const pagesLeft = 605 - quranState.page; // 604 is total, but we include current page if not finished
-
+        const pagesLeft = 605 - quranState.page;
         if (daysLeft <= 1) return { daily: pagesLeft, perWaqt: (pagesLeft / 5).toFixed(1), daysLeft: Math.max(0, daysLeft) };
-
         const daily = (pagesLeft / daysLeft).toFixed(1);
         const perWaqt = (pagesLeft / (daysLeft * 5)).toFixed(1);
-
         return { daily, perWaqt, daysLeft };
     };
 
     const pace = getTilawatPace();
-
-    // Stats
     const quranProgressPercent = Math.round((quranState.page / 604) * 100);
-    const totalPossibleWaqt = Object.keys(prayerLogs).length * 5;
-
-    // Improved Calculations to avoid double counting
     const prayerStats = Object.values(prayerLogs).reduce((acc, day) => {
         WAQT_LIST.forEach(w => {
             if (day[w]) acc.performed++;
@@ -141,205 +115,215 @@ const App = () => {
         setPrayerLogs(prev => {
             const dayLogs = prev[date] || {};
             const updates = {};
-
             if (type === 'done') {
                 const newState = !dayLogs[waqt];
                 updates[waqt] = newState;
-                if (!newState) updates[waqt + '_jamah'] = false; // Uncheck jamah if done is unchecked
+                if (!newState) updates[waqt + '_jamah'] = false;
             } else {
                 const newState = !dayLogs[waqt + '_jamah'];
                 updates[waqt + '_jamah'] = newState;
-                if (newState) updates[waqt] = true; // Auto-check done if jamah is checked
+                if (newState) updates[waqt] = true;
             }
-
-            return {
-                ...prev,
-                [date]: { ...dayLogs, ...updates }
-            };
+            return { ...prev, [date]: { ...dayLogs, ...updates } };
         });
     };
 
     return (
-        <div className="max-w-6xl mx-auto px-4 py-8">
-            <header className="mb-12 text-center">
-                <motion.h1
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-5xl font-black text-gradient mb-2"
+        <div className="relative min-h-screen text-slate-100 selection:bg-primary/30 selection:text-primary">
+            {/* Background Ornaments */}
+            <div className="fixed inset-0 pointer-events-none overflow-hidden opacity-20">
+                <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 100, repeat: Infinity, ease: "linear" }}
+                    className="absolute -top-24 -left-24 text-primary/10"
                 >
-                    RAMADAN COMPASS
-                </motion.h1>
-                <p className="text-slate-400 font-medium">Smart Tilawat & Prayer Tracking</p>
-            </header>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                <StatCard
-                    icon={<BookOpen className="text-primary" />}
-                    label="Tilawat Progress"
-                    value={`${quranProgressPercent}%`}
-                    subValue={`Page ${quranState.page} / 604`}
-                />
-                <StatCard
-                    icon={<Users className="text-emerald-400" />}
-                    label="Jamah Target"
-                    value={prayerStats.performed > 0 ? `${Math.round((prayerStats.jamah / prayerStats.performed) * 100)}%` : '0%'}
-                    subValue={`${prayerStats.jamah} Jamah / ${prayerStats.performed} Performed`}
-                />
-                <StatCard
-                    icon={<Trophy className="text-orange-400" />}
-                    label="Remaining"
-                    value={pace.daysLeft > 0 ? pace.daysLeft : 0}
-                    subValue="Days to Target"
-                />
+                    <Moon size={400} />
+                </motion.div>
+                <div className="absolute top-1/4 right-10 text-primary/5 animate-float"><Star size={120} fill="currentColor" /></div>
+                <div className="absolute bottom-1/4 left-10 text-primary/5 animate-float" style={{ animationDelay: '2s' }}><Star size={80} fill="currentColor" /></div>
             </div>
 
-            <div className="flex justify-center gap-4 mb-12">
-                <TabButton
-                    active={activeTab === 'quran'}
-                    onClick={() => setActiveTab('quran')}
-                    icon={<Bookmark size={20} />}
-                    label="Tilawat Tracker"
-                />
-                <TabButton
-                    active={activeTab === 'prayer'}
-                    onClick={() => setActiveTab('prayer')}
-                    icon={<Clock size={20} />}
-                    label="Prayer Tracker"
-                />
-            </div>
-
-            <AnimatePresence mode="wait">
-                {activeTab === 'quran' ? (
+            <div className="max-w-6xl mx-auto px-4 py-12 relative z-10">
+                <header className="mb-16 text-center">
                     <motion.div
-                        key="quran"
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className="max-w-4xl mx-auto"
-                    >
-                        <div className="premium-card p-10 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 p-8 opacity-10">
-                                <BookOpen size={120} />
-                            </div>
-
-                            {/* Pace Alert Box */}
-                            <div className="mb-10 p-6 bg-primary/10 border border-primary/20 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6">
-                                <div>
-                                    <h3 className="text-primary font-black uppercase tracking-widest text-sm mb-1">Required Finishing Pace</h3>
-                                    <p className="text-slate-300 text-sm">To finish by the <strong>{targetDay}th of Ramadan</strong>:</p>
-                                </div>
-                                <div className="flex gap-4">
-                                    <div className="text-center bg-dark/40 px-4 py-2 rounded-xl border border-white/5">
-                                        <p className="text-2xl font-black text-primary">{pace.daily}</p>
-                                        <p className="text-[10px] uppercase text-slate-500 font-bold">Pages / Day</p>
-                                    </div>
-                                    <div className="text-center bg-dark/40 px-4 py-2 rounded-xl border border-white/5">
-                                        <p className="text-2xl font-black text-primary">{pace.perWaqt}</p>
-                                        <p className="text-[10px] uppercase text-slate-500 font-bold">Pages / Waqt</p>
-                                    </div>
-                                </div>
-                                <div className="flex bg-dark/50 rounded-lg p-1">
-                                    {[27, 29].map(d => (
-                                        <button
-                                            key={d}
-                                            onClick={() => setTargetDay(d)}
-                                            className={`px-4 py-2 rounded-md text-xs font-black transition-all ${targetDay === d ? 'bg-primary text-dark shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
-                                        >
-                                            {d}th
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-                                <Layers className="text-primary" />
-                                Update Current Reading
-                            </h2>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                                <SmartInput
-                                    label="Juz / Para"
-                                    value={quranState.juz}
-                                    max={30}
-                                    onChange={updateByJuz}
-                                    icon={<Hash size={16} />}
-                                />
-                                <SmartInput
-                                    label="Page (Hafezi)"
-                                    value={quranState.page}
-                                    max={604}
-                                    onChange={updateByPage}
-                                    icon={<Bookmark size={16} />}
-                                />
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase text-slate-500 tracking-wider">Surah Name</label>
-                                    <select
-                                        value={quranState.surah}
-                                        onChange={(e) => updateBySurah(e.target.value)}
-                                        className="w-full bg-dark/50 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-primary transition-all text-primary font-bold appearance-none cursor-pointer"
-                                    >
-                                        {surahStarts.map(s => (
-                                            <option key={s.n} value={s.n} className="bg-dark">{s.n}. {s.s}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <SmartInput
-                                    label="Ayat Number"
-                                    value={quranState.ayat}
-                                    max={286}
-                                    onChange={updateByAyat}
-                                    icon={<Plus size={16} />}
-                                />
-                            </div>
-
-                            <div className="mt-12 p-6 bg-white/5 rounded-2xl border border-white/5 flex flex-col md:flex-row items-center justify-between gap-6">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-primary text-2xl font-black">
-                                        {quranState.juz}
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-bold text-slate-400">Current Position</p>
-                                        <p className="text-xl font-black text-gradient uppercase tracking-wide">
-                                            {surahStarts.find(s => s.n === quranState.surah)?.s} • Page {quranState.page}
-                                        </p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => updateByPage(quranState.page + 1)}
-                                    className="px-8 py-3 bg-primary text-dark font-black rounded-xl hover:shadow-lg hover:shadow-primary/20 transition-all flex items-center gap-2"
-                                >
-                                    Finish Page <Plus size={20} />
-                                </button>
-                            </div>
-                        </div>
-                    </motion.div>
-                ) : (
-                    <motion.div
-                        key="prayer"
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                        className="inline-block mb-4"
                     >
-                        {ramadanDays.map(day => (
-                            <PrayerDay
-                                key={day.ramadanDay}
-                                day={day}
-                                isToday={day.fullDate === today}
-                                logs={prayerLogs[day.fullDate] || {}}
-                                onToggle={(waqt, type) => toggleWaqt(day.fullDate, waqt, type)}
-                            />
-                        ))}
+                        <span className="px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-black uppercase tracking-[0.3em]">
+                            Blessed Month 2026
+                        </span>
                     </motion.div>
-                )}
-            </AnimatePresence>
+                    <motion.h1
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="text-6xl md:text-7xl font-black text-gradient mb-4 tracking-tighter"
+                    >
+                        RAMADAN COMPASS
+                    </motion.h1>
+                    <p className="text-slate-400 font-medium tracking-wide">Elite Spiritual Tracking for the Modern Mu'min</p>
+                </header>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+                    <StatCard
+                        icon={<BookOpen className="text-primary w-8 h-8" />}
+                        label="Tilawat Flow"
+                        value={`${quranProgressPercent}%`}
+                        subValue={`Page ${quranState.page} • Juz ${quranState.juz}`}
+                    />
+                    <StatCard
+                        icon={<Users className="text-blue-400 w-8 h-8" />}
+                        label="Jamah Target"
+                        value={prayerStats.performed > 0 ? `${Math.round((prayerStats.jamah / prayerStats.performed) * 100)}%` : '0%'}
+                        subValue={`${prayerStats.jamah} Congregations`}
+                    />
+                    <StatCard
+                        icon={<Trophy className="text-orange-400 w-8 h-8" />}
+                        label="Goal Countdown"
+                        value={pace.daysLeft > 0 ? pace.daysLeft : 0}
+                        subValue={`Days till Day ${targetDay}`}
+                    />
+                </div>
+
+                <div className="flex flex-wrap justify-center gap-6 mb-16">
+                    <TabButton
+                        active={activeTab === 'quran'}
+                        onClick={() => setActiveTab('quran')}
+                        icon={<Bookmark size={22} />}
+                        label="Tilawat Hub"
+                    />
+                    <TabButton
+                        active={activeTab === 'prayer'}
+                        onClick={() => setActiveTab('prayer')}
+                        icon={<Clock size={22} />}
+                        label="Prayer Center"
+                    />
+                </div>
+
+                <AnimatePresence mode="wait">
+                    {activeTab === 'quran' ? (
+                        <motion.div
+                            key="quran"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            className="max-w-5xl mx-auto"
+                        >
+                            <div className="premium-card p-8 md:p-12 relative overflow-hidden group">
+                                <div className="absolute -top-10 -right-10 text-primary/5 transition-transform group-hover:scale-110 duration-1000">
+                                    <BookOpen size={300} />
+                                </div>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start relative z-10">
+                                    <div className="lg:col-span-2">
+                                        <div className="flex items-center gap-4 mb-10">
+                                            <div className="p-3 bg-primary/20 rounded-2xl text-primary"><Layers size={32} /></div>
+                                            <div>
+                                                <h2 className="text-3xl font-black text-white">Smart Tilawat Input</h2>
+                                                <p className="text-slate-400 font-medium">Auto-tracing your Quranic journey</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-12">
+                                            <SmartInput label="Juz / Para" value={quranState.juz} max={30} onChange={updateByJuz} icon={<Hash size={16} />} />
+                                            <SmartInput label="Page (Hafezi)" value={quranState.page} max={604} onChange={updateByPage} icon={<Bookmark size={16} />} />
+                                            <div className="space-y-3">
+                                                <label className="text-[10px] font-black uppercase text-primary tracking-[0.2em] ml-1">Surah</label>
+                                                <div className="relative">
+                                                    <select
+                                                        value={quranState.surah}
+                                                        onChange={(e) => updateBySurah(e.target.value)}
+                                                        className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-primary/50 focus:bg-white/[0.05] transition-all text-white font-bold appearance-none cursor-pointer"
+                                                    >
+                                                        {surahStarts.map(s => <option key={s.n} value={s.n} className="bg-neutral-900">{s.n}. {s.s}</option>)}
+                                                    </select>
+                                                    <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500"><Plus size={20} /></div>
+                                                </div>
+                                            </div>
+                                            <SmartInput label="Ayat" value={quranState.ayat} max={286} onChange={updateByAyat} icon={<Plus size={16} />} />
+                                        </div>
+
+                                        <div className="p-8 bg-gradient-to-br from-white/[0.05] to-transparent rounded-[2.5rem] border border-white/5 flex flex-col md:flex-row items-center justify-between gap-8">
+                                            <div className="flex items-center gap-6">
+                                                <div className="w-20 h-20 rounded-3xl bg-primary/20 flex items-center justify-center text-primary text-3xl font-black shadow-inner">
+                                                    {quranState.juz}
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-black text-primary uppercase tracking-[0.2em] mb-1">Current Station</p>
+                                                    <p className="text-2xl font-black text-white">
+                                                        {surahStarts.find(s => s.n === quranState.surah)?.s}
+                                                    </p>
+                                                    <p className="text-slate-500 font-bold">Page {quranState.page} of 604</p>
+                                                </div>
+                                            </div>
+                                            <motion.button
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                                onClick={() => updateByPage(quranState.page + 1)}
+                                                className="w-full md:w-auto px-10 py-5 bg-primary text-neutral-950 font-black rounded-3xl shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all flex items-center justify-center gap-3"
+                                            >
+                                                Next Page <Plus size={24} />
+                                            </motion.button>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white/[0.02] border border-white/10 rounded-[2.5rem] p-8 lg:mt-6">
+                                        <h3 className="text-xl font-black text-white mb-8 flex items-center gap-3">
+                                            <Star className="text-primary" size={20} fill="currentColor" />
+                                            Reading Pace
+                                        </h3>
+                                        <div className="space-y-6">
+                                            <PaceCard label="Daily Goal" val={pace.daily} unit="Pages" />
+                                            <PaceCard label="Per Waqt" val={pace.perWaqt} unit="Pages" />
+
+                                            <div className="pt-6 border-t border-white/10 mt-8">
+                                                <p className="text-xs font-black text-slate-500 uppercase tracking-widest mb-4">Complete by</p>
+                                                <div className="flex bg-neutral-900/50 p-1.5 rounded-2xl border border-white/5">
+                                                    {[27, 29].map(d => (
+                                                        <button
+                                                            key={d}
+                                                            onClick={() => setTargetDay(d)}
+                                                            className={`flex-1 py-3 rounded-xl text-xs font-black transition-all ${targetDay === d ? 'bg-primary text-dark shadow-lg shadow-primary/20 scale-100' : 'text-slate-500 hover:text-white'}`}
+                                                        >
+                                                            Day {d}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key="prayer"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                        >
+                            {ramadanDays.map(day => (
+                                <PrayerDay
+                                    key={day.ramadanDay}
+                                    day={day}
+                                    isToday={day.fullDate === today}
+                                    logs={prayerLogs[day.fullDate] || {}}
+                                    onToggle={(waqt, type) => toggleWaqt(day.fullDate, waqt, type)}
+                                />
+                            ))}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
         </div>
     );
 };
 
 const SmartInput = ({ label, value, max, onChange, icon }) => (
-    <div className="space-y-2">
-        <label className="text-xs font-bold uppercase text-slate-500 tracking-wider flex items-center gap-1">
+    <div className="space-y-3">
+        <label className="text-[10px] font-black uppercase text-primary tracking-[0.2em] ml-1 flex items-center gap-2">
             {icon} {label}
         </label>
         <div className="relative group">
@@ -349,32 +333,49 @@ const SmartInput = ({ label, value, max, onChange, icon }) => (
                 onChange={(e) => onChange(e.target.value)}
                 min={1}
                 max={max}
-                className="w-full bg-dark/50 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-primary transition-all text-primary font-bold group-hover:border-white/20"
+                className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-primary/50 focus:bg-white/[0.05] transition-all text-white font-bold tracking-widest group-hover:border-white/20"
             />
-            <span className="absolute right-4 top-3 text-[10px] text-slate-600 font-bold">MAX {max}</span>
+            <span className="absolute right-5 top-1/2 -translate-y-1/2 text-[9px] text-slate-600 font-black uppercase tracking-widest">Max {max}</span>
+        </div>
+    </div>
+);
+
+const PaceCard = ({ label, val, unit }) => (
+    <div className="flex justify-between items-center p-5 bg-white/[0.03] rounded-2xl border border-white/5">
+        <span className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">{label}</span>
+        <div className="text-right">
+            <span className="text-2xl font-black text-primary mr-1">{val}</span>
+            <span className="text-[10px] font-black text-slate-500 uppercase">{unit}</span>
         </div>
     </div>
 );
 
 const StatCard = ({ icon, label, value, subValue }) => (
-    <div className="premium-card p-6 flex items-center gap-6">
-        <div className="p-4 bg-white/5 rounded-2xl">{icon}</div>
-        <div>
-            <p className="text-slate-400 text-sm font-medium">{label}</p>
-            <p className="text-3xl font-bold">{value}</p>
-            <p className="text-xs text-slate-500 mt-1">{subValue}</p>
+    <motion.div
+        whileHover={{ y: -5 }}
+        className="premium-card p-8 flex items-center gap-8 group"
+    >
+        <div className="p-5 bg-white/[0.03] rounded-3xl border border-white/10 group-hover:bg-primary/5 group-hover:border-primary/20 transition-all duration-500">
+            {icon}
         </div>
-    </div>
+        <div>
+            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">{label}</p>
+            <p className="text-4xl font-black text-white tracking-tighter mb-1">{value}</p>
+            <p className="text-xs text-slate-500 font-bold">{subValue}</p>
+        </div>
+    </motion.div>
 );
 
 const TabButton = ({ active, onClick, icon, label }) => (
     <button
         onClick={onClick}
-        className={`flex items-center gap-2 px-8 py-4 rounded-2xl font-black transition-all ${active ? 'bg-primary text-dark shadow-xl shadow-primary/20 scale-105' : 'bg-card text-slate-400 hover:text-white'
+        className={`flex items-center gap-3 px-10 py-5 rounded-[2rem] font-black transition-all duration-500 border ${active
+                ? 'bg-primary text-dark shadow-2xl shadow-primary/30 border-primary scale-105'
+                : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10 hover:text-white hover:border-white/10'
             }`}
     >
         {icon}
-        {label}
+        <span className="tracking-wide">{label}</span>
     </button>
 );
 
@@ -383,47 +384,58 @@ const PrayerDay = ({ day, logs, onToggle, isToday }) => {
     const jamahCount = WAQT_LIST.filter(w => logs[w + '_jamah']).length;
 
     return (
-        <div className={`premium-card p-5 ${isToday ? 'ring-2 ring-primary/50' : ''}`}>
-            <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center gap-3">
-                    <span className="text-2xl font-black text-primary">#{day.ramadanDay}</span>
+        <motion.div
+            whileHover={{ y: -5 }}
+            className={`premium-card p-6 ${isToday ? 'ring-2 ring-primary border-primary/40' : ''}`}
+        >
+            <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black text-xl border border-primary/20">
+                        {day.ramadanDay}
+                    </div>
                     <div>
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{day.date}</p>
-                        {isToday && <span className="text-[10px] bg-primary/20 text-primary px-1 rounded">TODAY</span>}
+                        <p className="text-xs font-black text-slate-500 uppercase tracking-widest">{day.date}</p>
+                        {isToday && <span className="text-[10px] font-black text-primary uppercase">Current Day</span>}
                     </div>
                 </div>
                 <div className="text-right">
-                    <p className="text-xl font-bold">{performedCount}/5</p>
-                    <p className="text-[10px] text-slate-500 uppercase">{jamahCount} Jamah</p>
+                    <p className="text-2xl font-black text-white">{performedCount}/5</p>
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">{jamahCount} Jamah</p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-5 gap-3">
                 {WAQT_LIST.map(waqt => {
                     const isDone = logs[waqt];
                     const isJamah = logs[waqt + '_jamah'];
                     return (
-                        <div key={waqt} className="flex flex-col gap-1">
+                        <div key={waqt} className="flex flex-col gap-2">
                             <button
                                 onClick={() => onToggle(waqt, 'done')}
-                                className={`flex flex-col items-center p-2 rounded-t-lg transition-all ${isDone ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-slate-600 hover:text-slate-400'}`}
-                                title={`Mark ${waqt} as Performed`}
+                                className={`flex flex-col items-center py-3 rounded-2xl transition-all duration-300 border ${isDone
+                                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-lg shadow-emerald-500/10'
+                                        : 'bg-white/5 border-white/5 text-slate-700 hover:text-slate-400'
+                                    }`}
+                                title={`Mark ${waqt} Done`}
                             >
-                                <span className="text-[10px] font-bold mb-1">{waqt[0]}</span>
-                                <CheckCircle2 size={16} />
+                                <span className="text-[10px] font-black mb-1.5 uppercase">{waqt[0]}</span>
+                                <CheckCircle2 size={18} />
                             </button>
                             <button
                                 onClick={() => onToggle(waqt, 'jamah')}
-                                className={`flex items-center justify-center p-1 rounded-b-lg transition-all border-t border-white/5 ${isJamah ? 'bg-primary/20 text-primary' : 'bg-white/5 text-slate-700 hover:text-slate-500'}`}
-                                title={`${waqt} in Jamah`}
+                                className={`flex items-center justify-center py-2.5 rounded-2xl transition-all duration-300 border ${isJamah
+                                        ? 'bg-primary border-primary text-neutral-950 shadow-lg shadow-primary/20'
+                                        : 'bg-neutral-900 border-white/5 text-slate-700 hover:text-primary hover:border-primary/30'
+                                    }`}
+                                title={`${waqt} in Congregation`}
                             >
-                                <Users size={12} />
+                                <Users size={14} />
                             </button>
                         </div>
                     );
                 })}
             </div>
-        </div>
+        </motion.div>
     );
 };
 
