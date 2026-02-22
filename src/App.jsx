@@ -103,15 +103,20 @@ const App = () => {
     const getTilawatPace = () => {
         const todayObj = new Date();
         const ramadanStart = new Date('2026-02-19');
-        const diffTime = todayObj - ramadanStart;
-        const currentRamadanDay = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        const daysLeft = targetDay - (currentRamadanDay > 0 ? currentRamadanDay : 0);
-        const pagesLeft = 604 - quranState.page;
+        // Reset hours to compare dates clearly
+        const d1 = new Date(todayObj.getFullYear(), todayObj.getMonth(), todayObj.getDate());
+        const d2 = new Date(ramadanStart.getFullYear(), ramadanStart.getMonth(), ramadanStart.getDate());
 
-        if (daysLeft <= 0) return { daily: pagesLeft, perWaqt: Math.ceil(pagesLeft / 5), daysLeft: 0 };
+        const diffDays = Math.floor((d1 - d2) / (1000 * 60 * 60 * 24));
+        const currentRamadanDay = diffDays + 1; // Day 1, Day 2 etc.
 
-        const daily = Math.ceil(pagesLeft / daysLeft);
+        const daysLeft = targetDay - (currentRamadanDay > 0 ? currentRamadanDay - 1 : 0);
+        const pagesLeft = 605 - quranState.page; // 604 is total, but we include current page if not finished
+
+        if (daysLeft <= 1) return { daily: pagesLeft, perWaqt: (pagesLeft / 5).toFixed(1), daysLeft: Math.max(0, daysLeft) };
+
+        const daily = (pagesLeft / daysLeft).toFixed(1);
         const perWaqt = (pagesLeft / (daysLeft * 5)).toFixed(1);
 
         return { daily, perWaqt, daysLeft };
@@ -132,26 +137,13 @@ const App = () => {
         return acc;
     }, { performed: 0, jamah: 0 });
 
-    const prayerPercent = totalPossibleWaqt > 0 ? Math.round((prayerStats.performed / totalPossibleWaqt) * 100) : 0;
-
-    const toggleWaqt = (date, waqt, type = 'done') => {
+    const toggleWaqt = (date, waqt) => {
         setPrayerLogs(prev => {
             const dayLogs = prev[date] || {};
-            const updates = {};
-
-            if (type === 'done') {
-                const newState = !dayLogs[waqt];
-                updates[waqt] = newState;
-                if (!newState) updates[waqt + '_jamah'] = false; // Uncheck jamah if done is unchecked
-            } else {
-                const newState = !dayLogs[waqt + '_jamah'];
-                updates[waqt + '_jamah'] = newState;
-                if (newState) updates[waqt] = true; // Check done if jamah is checked
-            }
-
+            const key = waqt + '_jamah';
             return {
                 ...prev,
-                [date]: { ...dayLogs, ...updates }
+                [date]: { ...dayLogs, [key]: !dayLogs[key] }
             };
         });
     };
@@ -164,7 +156,7 @@ const App = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="text-5xl font-black text-gradient mb-2"
                 >
-                    RAMADAN HUB
+                    RAMADAN COMPASS
                 </motion.h1>
                 <p className="text-slate-400 font-medium">Smart Tilawat & Prayer Tracking</p>
             </header>
@@ -177,10 +169,10 @@ const App = () => {
                     subValue={`Page ${quranState.page} / 604`}
                 />
                 <StatCard
-                    icon={<Clock className="text-emerald-400" />}
-                    label="Prayer Target"
-                    value={`${prayerPercent}%`}
-                    subValue={`${prayerStats.performed > 0 ? Math.round((prayerStats.jamah / prayerStats.performed) * 100) : 0}% in Jamah`}
+                    icon={<Users className="text-emerald-400" />}
+                    label="Jamah Tracker"
+                    value={prayerStats.jamah}
+                    subValue="Performed in Jamah"
                 />
                 <StatCard
                     icon={<Trophy className="text-orange-400" />}
@@ -324,7 +316,7 @@ const App = () => {
                                 day={day}
                                 isToday={day.fullDate === today}
                                 logs={prayerLogs[day.fullDate] || {}}
-                                onToggle={(waqt, type) => toggleWaqt(day.fullDate, waqt, type)}
+                                onToggle={(waqt) => toggleWaqt(day.fullDate, waqt)}
                             />
                         ))}
                     </motion.div>
@@ -376,7 +368,6 @@ const TabButton = ({ active, onClick, icon, label }) => (
 );
 
 const PrayerDay = ({ day, logs, onToggle, isToday }) => {
-    const performedCount = WAQT_LIST.filter(w => logs[w]).length;
     const jamahCount = WAQT_LIST.filter(w => logs[w + '_jamah']).length;
 
     return (
@@ -390,32 +381,24 @@ const PrayerDay = ({ day, logs, onToggle, isToday }) => {
                     </div>
                 </div>
                 <div className="text-right">
-                    <p className="text-xl font-bold">{performedCount}/5</p>
-                    <p className="text-[10px] text-slate-500 uppercase">{jamahCount} in Jamah</p>
+                    <p className="text-xl font-bold">{jamahCount}/5</p>
+                    <p className="text-[10px] text-slate-500 uppercase">Jamah Done</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-5 gap-2">
                 {WAQT_LIST.map(waqt => {
-                    const isDone = logs[waqt];
                     const isJamah = logs[waqt + '_jamah'];
                     return (
-                        <div key={waqt} className="flex flex-col gap-1">
-                            <button
-                                onClick={() => onToggle(waqt, 'done')}
-                                className={`flex flex-col items-center p-2 rounded-t-lg transition-all ${isDone ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-slate-600 hover:text-slate-400'}`}
-                            >
-                                <span className="text-[10px] font-bold mb-1">{waqt[0]}</span>
-                                <CheckCircle2 size={16} />
-                            </button>
-                            <button
-                                onClick={() => onToggle(waqt, 'jamah')}
-                                className={`flex items-center justify-center p-1 rounded-b-lg transition-all border-t border-white/5 ${isJamah ? 'bg-primary/20 text-primary' : 'bg-white/5 text-slate-700 hover:text-slate-500'}`}
-                                title="Performed in Jamah"
-                            >
-                                <Users size={12} />
-                            </button>
-                        </div>
+                        <button
+                            key={waqt}
+                            onClick={() => onToggle(waqt)}
+                            className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all ${isJamah ? 'bg-primary text-dark shadow-lg shadow-primary/20 scale-105' : 'bg-white/5 text-slate-600 hover:text-slate-400'}`}
+                            title={`Performed ${waqt} in Jamah`}
+                        >
+                            <span className="text-[10px] font-black">{waqt[0]}</span>
+                            <Users size={16} />
+                        </button>
                     );
                 })}
             </div>
