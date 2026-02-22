@@ -1,0 +1,283 @@
+:root {
+    --primary: #c9a227;
+    /* Gold */
+    --secondary: #0f3d3e;
+    /* Islamic Green */
+    --bg: #0a192f;
+    --text: #e6f1ff;
+    --card-bg: #112240;
+    --card-hover: #1d2d50;
+    --accent: #64ffda;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Outfit', sans-serif;
+}
+
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    padding: 2rem;
+    line-height: 1.6;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 3rem;
+    animation: fadeInDown 1s ease-out;
+}
+
+h1 {
+    font-size: 3rem;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(201, 162, 39, 0.3);
+}
+
+.subtitle {
+    color: var(--accent);
+    font-weight: 300;
+    margin-bottom: 2rem;
+}
+
+.search-container {
+    max-width: 600px;
+    margin: 0 auto 3rem auto;
+}
+
+#surah-search {
+    width: 100%;
+    padding: 12px 25px;
+    background: var(--card-bg);
+    border: 1px solid rgba(201, 162, 39, 0.3);
+    border-radius: 30px;
+    color: var(--text);
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s;
+}
+
+#surah-search:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 15px rgba(201, 162, 39, 0.2);
+}
+
+.stats-container {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 3rem;
+    flex-wrap: wrap;
+}
+
+.stat-card {
+    background: var(--card-bg);
+    padding: 1.5rem 2.5rem;
+    border-radius: 12px;
+    border-top: 3px solid var(--primary);
+    text-align: center;
+    box-shadow: 0 10px 30px -15px rgba(2, 12, 27, 0.7);
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary);
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.surah-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.surah-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+
+.surah-card:hover {
+    background: var(--card-hover);
+    border-color: var(--primary);
+    box-shadow: 0 20px 30px -15px rgba(2, 12, 27, 0.7);
+}
+
+.surah-number {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    font-size: 4rem;
+    font-weight: 900;
+    opacity: 0.05;
+    color: var(--text);
+}
+
+.surah-name {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: var(--primary);
+    margin-bottom: 5px;
+}
+
+.surah-english {
+    font-size: 0.9rem;
+    opacity: 0.7;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.surah-ayats {
+    font-size: 0.8rem;
+    background: rgba(100, 255, 218, 0.1);
+    color: var(--accent);
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    margin-top: 15px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary);
+    width: 0%;
+    transition: width 0.5s ease;
+}
+
+.tracking-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.ayat-input-group {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 5px 10px;
+    border-radius: 8px;
+    flex: 1;
+}
+
+.ayat-input {
+    width: 45px;
+    background: transparent;
+    border: none;
+    color: var(--primary);
+    font-size: 1rem;
+    font-weight: bold;
+    outline: none;
+    text-align: center;
+}
+
+/* Remove arrows from number input */
+.ayat-input::-webkit-inner-spin-button,
+.ayat-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.ayat-total {
+    font-size: 0.8rem;
+    opacity: 0.5;
+    margin-left: 5px;
+}
+
+.btn-quick-add {
+    background: var(--primary);
+    color: var(--bg);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+.btn-quick-add:hover {
+    transform: scale(1.1);
+}
+
+.btn-complete {
+    background: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+}
+
+.btn-complete:hover {
+    background: var(--primary);
+    color: var(--bg);
+}
+
+.btn-complete.active {
+    background: var(--primary);
+    color: var(--bg);
+    font-weight: bold;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--card-bg);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
