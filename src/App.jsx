@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Calendar, Clock, CheckCircle2, Search, Plus, Trophy, Bookmark, Hash, Layers } from 'lucide-react';
+import { BookOpen, Calendar, Clock, CheckCircle2, Search, Plus, Trophy, Bookmark, Hash, Layers, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { juzStarts, surahStarts } from './data/quranMapping';
 
@@ -122,17 +122,38 @@ const App = () => {
     // Stats
     const quranProgressPercent = Math.round((quranState.page / 604) * 100);
     const totalPossibleWaqt = Object.keys(prayerLogs).length * 5;
-    const performedWaqt = Object.values(prayerLogs).reduce((acc, day) => acc + Object.values(day).filter(Boolean).length, 0);
-    const prayerPercent = totalPossibleWaqt > 0 ? Math.round((performedWaqt / totalPossibleWaqt) * 100) : 0;
 
-    const toggleWaqt = (date, waqt) => {
-        setPrayerLogs(prev => ({
-            ...prev,
-            [date]: {
-                ...prev[date],
-                [waqt]: !prev[date]?.[waqt]
+    // Improved Calculations to avoid double counting
+    const prayerStats = Object.values(prayerLogs).reduce((acc, day) => {
+        WAQT_LIST.forEach(w => {
+            if (day[w]) acc.performed++;
+            if (day[w + '_jamah']) acc.jamah++;
+        });
+        return acc;
+    }, { performed: 0, jamah: 0 });
+
+    const prayerPercent = totalPossibleWaqt > 0 ? Math.round((prayerStats.performed / totalPossibleWaqt) * 100) : 0;
+
+    const toggleWaqt = (date, waqt, type = 'done') => {
+        setPrayerLogs(prev => {
+            const dayLogs = prev[date] || {};
+            const updates = {};
+
+            if (type === 'done') {
+                const newState = !dayLogs[waqt];
+                updates[waqt] = newState;
+                if (!newState) updates[waqt + '_jamah'] = false; // Uncheck jamah if done is unchecked
+            } else {
+                const newState = !dayLogs[waqt + '_jamah'];
+                updates[waqt + '_jamah'] = newState;
+                if (newState) updates[waqt] = true; // Check done if jamah is checked
             }
-        }));
+
+            return {
+                ...prev,
+                [date]: { ...dayLogs, ...updates }
+            };
+        });
     };
 
     return (
@@ -157,9 +178,9 @@ const App = () => {
                 />
                 <StatCard
                     icon={<Clock className="text-emerald-400" />}
-                    label="Daily Target"
-                    value={`${pace.daily} pgs`}
-                    subValue={`Aiming for ${targetDay}th Ram.`}
+                    label="Prayer Target"
+                    value={`${prayerPercent}%`}
+                    subValue={`${prayerStats.performed > 0 ? Math.round((prayerStats.jamah / prayerStats.performed) * 100) : 0}% in Jamah`}
                 />
                 <StatCard
                     icon={<Trophy className="text-orange-400" />}
@@ -303,7 +324,7 @@ const App = () => {
                                 day={day}
                                 isToday={day.fullDate === today}
                                 logs={prayerLogs[day.fullDate] || {}}
-                                onToggle={(waqt) => toggleWaqt(day.fullDate, waqt)}
+                                onToggle={(waqt, type) => toggleWaqt(day.fullDate, waqt, type)}
                             />
                         ))}
                     </motion.div>
@@ -355,7 +376,9 @@ const TabButton = ({ active, onClick, icon, label }) => (
 );
 
 const PrayerDay = ({ day, logs, onToggle, isToday }) => {
-    const count = Object.values(logs).filter(Boolean).length;
+    const performedCount = WAQT_LIST.filter(w => logs[w]).length;
+    const jamahCount = WAQT_LIST.filter(w => logs[w + '_jamah']).length;
+
     return (
         <div className={`premium-card p-5 ${isToday ? 'ring-2 ring-primary/50' : ''}`}>
             <div className="flex justify-between items-center mb-4">
@@ -367,23 +390,34 @@ const PrayerDay = ({ day, logs, onToggle, isToday }) => {
                     </div>
                 </div>
                 <div className="text-right">
-                    <p className="text-xl font-bold">{count}/5</p>
-                    <p className="text-[10px] text-slate-500 uppercase">Waqt Performed</p>
+                    <p className="text-xl font-bold">{performedCount}/5</p>
+                    <p className="text-[10px] text-slate-500 uppercase">{jamahCount} in Jamah</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-5 gap-2">
-                {WAQT_LIST.map(waqt => (
-                    <button
-                        key={waqt}
-                        onClick={() => onToggle(waqt)}
-                        className={`flex flex-col items-center p-2 rounded-lg transition-all ${logs[waqt] ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-slate-600 hover:text-slate-400'
-                            }`}
-                    >
-                        <span className="text-[10px] font-bold mb-1">{waqt[0]}</span>
-                        <CheckCircle2 size={16} />
-                    </button>
-                ))}
+                {WAQT_LIST.map(waqt => {
+                    const isDone = logs[waqt];
+                    const isJamah = logs[waqt + '_jamah'];
+                    return (
+                        <div key={waqt} className="flex flex-col gap-1">
+                            <button
+                                onClick={() => onToggle(waqt, 'done')}
+                                className={`flex flex-col items-center p-2 rounded-t-lg transition-all ${isDone ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-slate-600 hover:text-slate-400'}`}
+                            >
+                                <span className="text-[10px] font-bold mb-1">{waqt[0]}</span>
+                                <CheckCircle2 size={16} />
+                            </button>
+                            <button
+                                onClick={() => onToggle(waqt, 'jamah')}
+                                className={`flex items-center justify-center p-1 rounded-b-lg transition-all border-t border-white/5 ${isJamah ? 'bg-primary/20 text-primary' : 'bg-white/5 text-slate-700 hover:text-slate-500'}`}
+                                title="Performed in Jamah"
+                            >
+                                <Users size={12} />
+                            </button>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );
