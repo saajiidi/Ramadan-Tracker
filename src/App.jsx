@@ -258,11 +258,22 @@ const App = () => {
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="inline-block mb-6"
+                        className="flex flex-col items-center gap-4 mb-6"
                     >
                         <span className="px-5 py-2 rounded-full bg-primary/10 border border-primary/30 text-primary text-[10px] md:text-xs font-black uppercase tracking-[0.4em] backdrop-blur-md">
                             Sacred Month • 1447 AH
                         </span>
+
+                        {installPrompt && (
+                            <motion.button
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                onClick={handleInstall}
+                                className="flex items-center gap-2 px-4 py-2 bg-primary/20 border border-primary/40 rounded-xl text-primary text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-neutral-950 transition-all shadow-lg shadow-primary/5"
+                            >
+                                <Plus size={14} className="rotate-45" /> Download Personal App
+                            </motion.button>
+                        )}
                     </motion.div>
                     <motion.h1
                         initial={{ opacity: 0, y: -20 }}
@@ -434,6 +445,58 @@ const App = () => {
                         </motion.div>
                     )}
                 </AnimatePresence>
+
+                {/* Personal Utility Card */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    className="mt-24 max-w-4xl mx-auto"
+                >
+                    <div className="premium-card p-8 md:p-12 relative overflow-hidden text-center">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent shadow-[0_0_15px_rgba(212,175,55,0.5)]" />
+
+                        <div className="relative z-10 flex flex-col items-center gap-6">
+                            <div className="w-16 h-16 rounded-3xl bg-primary/10 flex items-center justify-center text-primary shadow-inner mb-2">
+                                <Plus size={32} className="rotate-45" />
+                            </div>
+
+                            <div>
+                                <h2 className="text-3xl font-black text-white mb-4 tracking-tight">Your Personal Spiritual Utility</h2>
+                                <p className="text-slate-400 max-w-xl mx-auto font-medium">
+                                    Ramadan Compass is designed as a standalone personal app. By downloading it, you get <span className="text-primary">Offline Access</span>, <span className="text-white">100% Private Local Storage</span>, and a dedicated experience without browser distractions.
+                                </p>
+                            </div>
+
+                            <div className="flex flex-wrap justify-center gap-8 mt-4 text-xs font-black uppercase tracking-[0.2em]">
+                                <div className="flex items-center gap-2 text-emerald-400">
+                                    <CheckCircle2 size={16} /> 100% Offline
+                                </div>
+                                <div className="flex items-center gap-2 text-blue-400">
+                                    <CheckCircle2 size={16} /> Private Cache
+                                </div>
+                                <div className="flex items-center gap-2 text-orange-400">
+                                    <CheckCircle2 size={16} /> No Login
+                                </div>
+                            </div>
+
+                            {installPrompt ? (
+                                <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={handleInstall}
+                                    className="mt-6 px-12 py-5 bg-primary text-neutral-950 font-black rounded-2xl shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all flex items-center justify-center gap-3 text-lg"
+                                >
+                                    Download Now <Plus size={24} className="rotate-45" />
+                                </motion.button>
+                            ) : (
+                                <div className="mt-8 px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                                    Already Running as App • Data Saved Locally
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </motion.div>
             </div>
         </div>
     );
