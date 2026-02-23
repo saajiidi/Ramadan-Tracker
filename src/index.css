@@ -108,5 +108,5 @@ body {
 }
 
 .mask-radial {
-    mask-image: radial-gradient(circle, white, transparent);
+    mask-image: radial-gradient(circle, black, transparent);
 }
