@@ -11,7 +11,7 @@ export default defineConfig({
                 enabled: true,
                 type: 'module'
             },
-            includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+            includeAssets: ['favicon.svg', 'logo.svg', 'mask-icon.svg'],
             manifest: {
                 name: 'Ramadan Compass',
                 short_name: 'Ramadan',
@@ -20,12 +20,20 @@ export default defineConfig({
                 background_color: '#050505',
                 display: 'standalone',
                 orientation: 'portrait',
+                start_url: '/',
+                scope: '/',
                 icons: [
+                    {
+                        src: 'logo.svg',
+                        sizes: 'any',
+                        type: 'image/svg+xml',
+                        purpose: 'any'
+                    },
                     {
                         src: 'mask-icon.svg',
                         sizes: 'any',
                         type: 'image/svg+xml',
-                        purpose: 'any maskable'
+                        purpose: 'maskable'
                     }
                 ]
             }
