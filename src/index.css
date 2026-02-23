@@ -25,40 +25,46 @@ body {
 
 /* Premium Glassmorphism */
 .premium-card {
-    @apply relative overflow-hidden transition-all duration-500 rounded-3xl;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(12px);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+    @apply relative overflow-hidden transition-all duration-700 rounded-[2.5rem];
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.01) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
 }
 
-.premium-card::before {
+.premium-card::after {
     content: '';
     position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg,
-            transparent,
-            rgba(255, 255, 255, 0.03),
-            transparent);
-    transition: 0.5s;
+    inset: 0;
+    background: radial-gradient(600px circle at var(--mouse-x, 0px) var(--mouse-y, 0px), rgba(212, 175, 55, 0.05), transparent 40%);
+    opacity: 0;
+    transition: opacity 0.5s;
+    pointer-events: none;
 }
 
-.premium-card:hover::before {
-    left: 100%;
+.premium-card:hover::after {
+    opacity: 1;
 }
 
 .premium-card:hover {
-    @apply -translate-y-2;
-    border-color: rgba(212, 175, 55, 0.3);
-    box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.9), 0 0 20px rgba(212, 175, 55, 0.1);
+    @apply -translate-y-1;
+    border-color: rgba(212, 175, 55, 0.25);
+    box-shadow:
+        0 25px 50px -12px rgba(0, 0, 0, 0.7),
+        0 0 15px rgba(212, 175, 55, 0.05);
 }
 
 .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-br from-[#f3eacb] via-[#d4af37] to-[#8d6e15];
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-[#ffffff] via-[#d4af37] to-[#8d6e15];
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    background-size: 200% auto;
+    animation: shine 8s linear infinite;
+}
+
+@keyframes shine {
+    to {
+        background-position: 200% center;
+    }
 }
 
 .stat-glow {
