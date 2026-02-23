@@ -279,8 +279,9 @@ const App = () => {
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1, type: "spring", stiffness: 100 }}
-                        className="text-5xl sm:text-7xl md:text-8xl font-black text-gradient mb-4 tracking-tighter leading-tight"
+                        className="text-5xl sm:text-7xl md:text-8xl font-black text-gradient mb-4 tracking-tighter leading-tight flex flex-col items-center gap-4"
                     >
+                        <img src="/logo.svg" alt="Ramadan Compass Logo" className="w-20 h-20 md:w-28 md:h-28 mb-4 drop-shadow-[0_0_15px_rgba(212,175,55,0.3)]" />
                         RAMADAN COMPASS
                     </motion.h1>
                     <motion.p
