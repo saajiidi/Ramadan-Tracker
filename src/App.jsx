@@ -156,7 +156,23 @@ const App = () => {
         });
     };
 
+    const [installPrompt, setInstallPrompt] = useState(null);
+    const [isIOS, setIsIOS] = useState(false);
+
     useEffect(() => {
+        const handleBeforeInstallPrompt = (e) => {
+            e.preventDefault();
+            setInstallPrompt(e);
+        };
+
+        const checkIOS = () => {
+            const userAgent = window.navigator.userAgent.toLowerCase();
+            return /iphone|ipad|ipod/.test(userAgent);
+        };
+
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        setIsIOS(checkIOS());
+
         const handleMouseMove = (e) => {
             const cards = document.getElementsByClassName('premium-card');
             for (const card of cards) {
@@ -169,8 +185,20 @@ const App = () => {
         };
 
         window.addEventListener('mousemove', handleMouseMove);
-        return () => window.removeEventListener('mousemove', handleMouseMove);
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+            window.removeEventListener('mousemove', handleMouseMove);
+        };
     }, []);
+
+    const handleInstall = async () => {
+        if (!installPrompt) return;
+        installPrompt.prompt();
+        const { outcome } = await installPrompt.userChoice;
+        if (outcome === 'accepted') {
+            setInstallPrompt(null);
+        }
+    };
 
     return (
         <div className="relative min-h-screen text-slate-200 selection:bg-primary/30 selection:text-primary pb-10">
@@ -186,6 +214,44 @@ const App = () => {
                 <div className="absolute top-1/4 right-[10%] text-primary/10 animate-float"><Star size={100} fill="currentColor" /></div>
                 <div className="absolute bottom-1/4 left-[5%] text-primary/10 animate-float" style={{ animationDelay: '3s' }}><Star size={60} fill="currentColor" /></div>
             </div>
+
+            {/* Install Prompt Overlay */}
+            <AnimatePresence>
+                {(installPrompt) && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 50 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 50 }}
+                        className="fixed bottom-6 left-4 right-4 z-[100] sm:left-auto sm:right-6 sm:w-80"
+                    >
+                        <div className="premium-card p-6 !bg-neutral-900/90 backdrop-blur-2xl border-primary/30 shadow-[0_20px_50px_-20px_rgba(212,175,55,0.4)]">
+                            <div className="flex items-start gap-4 mb-4">
+                                <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary border border-primary/20 shadow-inner">
+                                    <Bookmark size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="text-white font-black text-lg leading-tight uppercase tracking-tight">Personal App</h3>
+                                    <p className="text-slate-400 text-xs font-medium">Add to your home screen for quick daily tracking</p>
+                                </div>
+                            </div>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setInstallPrompt(null)}
+                                    className="flex-1 py-3 px-4 rounded-xl border border-white/5 text-slate-500 font-black text-xs uppercase hover:bg-white/5 transition-all"
+                                >
+                                    Later
+                                </button>
+                                <button
+                                    onClick={handleInstall}
+                                    className="flex-[2] py-3 px-4 rounded-xl bg-primary text-neutral-950 font-black text-xs uppercase shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all"
+                                >
+                                    Install Now
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16 relative z-10">
                 <header className="mb-12 md:mb-20 text-center">
