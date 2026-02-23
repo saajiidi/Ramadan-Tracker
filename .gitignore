@@ -6,3 +6,4 @@ dist
 .env.*
 dist-ssr
 *.log
+dev-dist
