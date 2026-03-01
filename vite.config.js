@@ -7,36 +7,24 @@ export default defineConfig({
         react(),
         VitePWA({
             registerType: 'autoUpdate',
-            devOptions: {
-                enabled: true,
-                type: 'module'
-            },
-            includeAssets: ['favicon.svg', 'logo.svg', 'mask-icon.svg'],
+            includeAssets: ['favicon.svg', 'logo.svg'],
             manifest: {
-                name: 'Ramadan Compass',
+                name: 'Ramadan Tracker',
                 short_name: 'Ramadan',
-                description: 'Elite Spiritual Tracking for the Modern Mu\'min',
+                description: 'Super Lightweight Ramadan Tracker',
                 theme_color: '#050505',
                 background_color: '#050505',
                 display: 'standalone',
-                orientation: 'portrait',
-                start_url: '/',
-                scope: '/',
                 icons: [
                     {
                         src: 'logo.svg',
                         sizes: 'any',
                         type: 'image/svg+xml',
                         purpose: 'any'
-                    },
-                    {
-                        src: 'mask-icon.svg',
-                        sizes: 'any',
-                        type: 'image/svg+xml',
-                        purpose: 'maskable'
                     }
                 ]
             }
         })
     ],
 })
+
