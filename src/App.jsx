@@ -159,7 +159,7 @@ const App = () => {
                 <div className="flex items-center gap-3">
                     <MoonIcon className="text-primary" size={32} />
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">Ramadan Tracker</h1>
+                        <h1 className="text-2xl font-bold tracking-tight">Ramadan Compass</h1>
                         <p className="text-xs text-slate-500 font-medium">1447 AH • Ultra Lightweight</p>
                     </div>
                 </div>

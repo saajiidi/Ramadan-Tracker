@@ -9,9 +9,9 @@ export default defineConfig({
             registerType: 'autoUpdate',
             includeAssets: ['favicon.svg', 'logo.svg'],
             manifest: {
-                name: 'Ramadan Tracker',
-                short_name: 'Ramadan',
-                description: 'Super Lightweight Ramadan Tracker',
+                name: 'Ramadan Compass',
+                short_name: 'Compass',
+                description: 'Super Lightweight Ramadan Compass',
                 theme_color: '#050505',
                 background_color: '#050505',
                 display: 'standalone',
