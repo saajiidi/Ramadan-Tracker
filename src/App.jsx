@@ -212,10 +212,10 @@ const App = () => {
                                 <p className="text-xs text-slate-500 font-medium">Page {quranState.page} of 604</p>
                             </div>
                             <button
-                                onClick={() => updateByPage((parseInt(quranState.page) || 0) + 1)}
+                                onClick={() => updateBySurah(parseInt(quranState.surah) + 1)}
                                 className="w-full sm:w-auto btn-primary flex items-center justify-center gap-2"
                             >
-                                Next Page <PlusIcon size={18} />
+                                Next Surah <PlusIcon size={18} />
                             </button>
                         </div>
                     </div>
