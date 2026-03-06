@@ -121,10 +121,23 @@ const App = () => {
         const currentRamadanDay = diffDays + 1;
         const daysLeft = targetDay - (currentRamadanDay > 0 ? currentRamadanDay - 1 : 0);
         const pagesLeft = 605 - quranState.page;
-        if (daysLeft <= 1) return { daily: pagesLeft, perWaqt: (pagesLeft / 5).toFixed(1), daysLeft: Math.max(0, daysLeft) };
+        
+        const ayatsLeft = Math.round(pagesLeft * (6236 / 604));
+
+        if (daysLeft <= 1) {
+            return { 
+                daily: pagesLeft, 
+                perWaqt: (pagesLeft / 5).toFixed(1), 
+                dailyAyats: ayatsLeft,
+                perWaqtAyats: Math.round(ayatsLeft / 5),
+                daysLeft: Math.max(0, daysLeft) 
+            };
+        }
         return {
             daily: (pagesLeft / daysLeft).toFixed(1),
             perWaqt: (pagesLeft / (daysLeft * 5)).toFixed(1),
+            dailyAyats: Math.round(ayatsLeft / daysLeft),
+            perWaqtAyats: Math.round(ayatsLeft / (daysLeft * 5)),
             daysLeft: Math.max(0, daysLeft)
         };
     };
@@ -209,9 +222,11 @@ const App = () => {
 
                     <div className="card">
                         <h2 className="text-sm font-bold uppercase text-slate-500 mb-4 tracking-widest">Pace Insights</h2>
-                        <div className="grid grid-cols-2 gap-4">
-                            <SmallStat label="Daily Goal" val={pace.daily} unit="Pages" />
-                            <SmallStat label="Per Prayer" val={pace.perWaqt} unit="Pages" />
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            <SmallStat label="Daily Pages" val={pace.daily} unit="Pages" />
+                            <SmallStat label="Daily Ayahs" val={pace.dailyAyats} unit="Ayahs ≈" />
+                            <SmallStat label="Pages / Prayer" val={pace.perWaqt} unit="Pages" />
+                            <SmallStat label="Ayahs / Prayer" val={pace.perWaqtAyats} unit="Ayahs ≈" />
                         </div>
                         <div className="mt-6 pt-6 border-t border-white/5 flex gap-2">
                             {[27, 29].map(d => (
